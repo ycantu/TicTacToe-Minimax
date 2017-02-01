@@ -3,59 +3,36 @@
 
 /* 
 TODO
-- After win, ask to play again
-- Make AI for tic-tac-toe (Minimax)
 - Testing
+- Clean up code
+- See if i dont have to reuse methods in AI
 */
 
 int main()
 {
 	Board n;
 	bool win = false;
-	//bool playAgain;
+	bool playAgain = true;
 
+	std::cout << "Welcome to Tic-Tac-Toe!" << std::endl;
 	n.introPrompt();
 
-	/*while (playAgain == true)
+	while (playAgain == true)
 	{
+		n.clearBoard();
+		win = false;
 
-	}*/
+		while (win == false)
+		{
+			n.displayBoard();
+			n.turnPrompt();
+			win = n.checkWinAI();
+			n.nextPlayer();
+		}
 
-	while (win == false)
-	{
 		n.displayBoard();
-		n.turnPrompt();
-		win = n.checkWinAI();
-
-			
-			//n.displayBoard();
-		std::cout << win << std::endl;
-
-		n.nextPlayer();
+		playAgain = n.playAgainPrompt();
 	}
-
-	
-
-/*	std::vector<char> m = { ' ', ' ', 'x', 'x', 'x', 'o', 'o', 'o' , 'x'};
-
-	AI* x = new AI(m);
-	std::vector<char> l = x->hypotheticalBoard(m, 1, true);
-
-	for (int i = 0; i < 9; i++)
-	{
-		std::cout << m[i] << std::endl;
-	}
-
-	std::cout << "COPY " << std::endl;
-
-	for (int i = 0; i < 9; i++)
-	{
-		std::cout << l[i] << std::endl;
-	}*/
-
-	/*std::vector<char> m = { '3', '3', 'x', 'o', '3', 'o', 'o', 'o' , 'x' };
-	AI x;
-	std::cout << x.checkWin(m, 0) << std::endl;*/
 
 	system("pause");
 	return 0;
