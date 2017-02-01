@@ -1,37 +1,37 @@
 #include <iostream>
 #include "Board.h"
 
-/* 
-TODO
-- Testing
-- Clean up code
-- See if i dont have to reuse methods in AI
-*/
-
 int main()
 {
 	Board n;
 	bool win = false;
 	bool playAgain = true;
+	bool changeControl = true;
 
 	std::cout << "Welcome to Tic-Tac-Toe!" << std::endl;
 	n.introPrompt();
 
-	while (playAgain == true)
+	// Main flow of game
+	while (changeControl == true)
 	{
-		n.clearBoard();
-		win = false;
-
-		while (win == false)
+		while (playAgain == true)
 		{
-			n.displayBoard();
-			n.turnPrompt();
-			win = n.checkWinAI();
-			n.nextPlayer();
-		}
+			n.restartGame();
+			win = false;
 
-		n.displayBoard();
-		playAgain = n.playAgainPrompt();
+			while (win == false)
+			{
+				n.displayBoard();
+				n.turnPrompt();
+				win = n.gameOver();
+			}
+
+			n.displayBoard();
+			playAgain = n.playAgainPrompt();
+			
+		}
+		changeControl = n.changeControls();
+		playAgain = (changeControl) ? true : false;
 	}
 
 	system("pause");

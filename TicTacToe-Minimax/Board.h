@@ -4,28 +4,31 @@
 
 //GLOBAL
 int TOTAL_CELLS = 9;
+int WINS[8][3] = { { 0, 1, 2 },{ 3, 4, 5 },{ 6, 7, 8 },
+{ 0, 3, 6 },{ 1, 4, 7 },{ 2, 5, 8 },
+{ 0, 4, 8 },{ 2, 4, 6 } };
 int TOTAL_WINS = 8;
 char BLANK = ' ';
 char X_SYM = 'X';
 char O_SYM = 'O';
 
+//Contains position and symbol for a player
 class Player
 {
 public:
 	int position;
 	char sym;
-	bool ai;
 
 	Player()
 	{
-
+		position = -1;
+		sym = BLANK;
 	}
 
 	Player(int pos, char x)
 	{
 		position = pos;
 		sym = x;
-		ai = false;
 	}
 
 	void setProperties(int pos, char x)
@@ -33,41 +36,23 @@ public:
 		position = pos;
 		sym = x;
 	}
-
 };
 
-//Inherit from player
+//Inherit from player, contains methods possible for minimax to work: 1)Check for wins, 2) Check for possible moves, 3) Return hypothetical board, 4) Minimax method
 class AI: public Player
 {
-public:
-	//Board* state;
+private:
 	int bestMove;
-	int wins[8][3] = { {0, 1, 2},{3, 4, 5},{6, 7, 8},
-	{0, 3, 6},{1, 4, 7},{2, 5, 8},
-	{0, 4, 8},{2, 4, 6} };
-
-
-	AI()
-	{
-		bestMove = -1;
-	}
-
-	AI(std::vector<char> x)
-	{
-		//y = x;
-		bestMove = -1;
-	}
-
 
 	int checkWin(std::vector<char> values, int depth)
 	{
 		for (int i = 0; i < TOTAL_WINS; i++)
 		{
-			if (values[wins[i][0]] == values[wins[i][1]] && values[wins[i][1]] == values[wins[i][2]])
+			if (values[WINS[i][0]] == values[WINS[i][1]] && values[WINS[i][1]] == values[WINS[i][2]])
 			{
-				if (values[wins[i][0]] == X_SYM)
+				if (values[WINS[i][0]] == X_SYM)
 					return 10 + depth;
-				if (values[wins[i][0]] == O_SYM)
+				if (values[WINS[i][0]] == O_SYM)
 					return depth - 10;
 			}
 		}
@@ -100,7 +85,6 @@ public:
 		}
 
 		return pos;
-
 	}
 
 	std::vector<char> hypotheticalBoard(const std::vector<char> &x, int pos, bool minMax)
@@ -139,13 +123,19 @@ public:
 			bestMove = moves[minIndex];
 			return scores[minIndex];
 		}
+
+	}
+public:
+	AI()
+	{
+		bestMove = -1;
 	}
 
 	int makeAIMove(std::vector<char> x, bool min)
 	{
-		if (min)
+		if (min) //If true, then we are maximizing
 			minimax(x, 0, true);
-		else
+		else //False, we are minimizing
 			minimax(x, 0, false);
 
 		return bestMove;
@@ -155,18 +145,97 @@ public:
 // Board class keeps state of board, displays, and prompts
 class Board
 {
-public:
-	std::vector<char> values;
-	char playerOneSym;
+private:
+
+	std::vector<char> values; //Values contains board values
 	bool turn;
-	int mode;
+	int mode; //1 for two humans, 2 for computer
 	Player* one;
 	Player* two;
 	AI* computer;
-	int wins[8][3] = { { 0, 1, 2 },{ 3, 4, 5 },{ 6, 7, 8 },
-	{ 0, 3, 6 },{ 1, 4, 7 },{ 2, 5, 8 },
-	{ 0, 4, 8 },{ 2, 4, 6 } };
 
+	void clearBoard()
+	{
+		values.clear();
+
+		for (int i = 0; i < TOTAL_CELLS; i++)
+		{
+			values.push_back(BLANK);
+		}
+	}
+
+	void resetTurns()
+	{
+		if (one->sym == X_SYM || one->position == -1)/*playerOneSym == X_SYM || one->position == -1*/
+			turn = false;
+		else
+			turn = true;
+	}
+
+	void turnPrompt(Player* x)
+	{
+
+		int cell;
+
+		std::cout << "Player " << x->position << " turn" << std::endl;
+		std::cout << "Which cell would you like to fill?" << std::endl;
+		std::cin >> cell;
+
+		if (values[cell] != BLANK)
+			turnPrompt(x);
+		else
+			values[cell] = x->sym;
+
+		turn = !turn;
+	}
+
+	void turnPromptAI(AI* computer)
+	{
+		std::cout << "Waiting for computer to make a move..." << std::endl;
+		int computerMove;
+
+		if (one->sym == X_SYM)/* (computer->position == 2)   */
+			computerMove = computer->makeAIMove(values, false);
+		else
+			computerMove = computer->makeAIMove(values, true);
+
+		values[computerMove] = computer->sym;
+		std::cout << "Computer chose cell " << computerMove << std::endl;
+
+		turn = !turn;
+	}
+
+	int checkWin()
+	{
+		for (int i = 0; i < TOTAL_WINS; i++)
+		{
+			if (values[WINS[i][0]] == values[WINS[i][1]] && values[WINS[i][1]] == values[WINS[i][2]])
+			{
+				if (values[WINS[i][0]] == X_SYM)
+					return 10;
+				if (values[WINS[i][0]] == O_SYM)
+					return -10;
+			}
+		}
+
+		if (isBoardFull())
+			return 0;
+		else
+			return -1;
+	}
+
+	bool isBoardFull()
+	{
+		for (int i = 0; i < 9; i++)
+		{
+			if (values[i] == BLANK)
+				return false;
+		}
+
+		return true;
+	}
+
+public:
 	Board()
 	{
 		for (int i = 0; i < TOTAL_CELLS; i++)
@@ -175,7 +244,6 @@ public:
 		}
 
 		turn = false; //If false, x goes first, else o goes first
-		playerOneSym = X_SYM;
 		mode = 0;
 		one = new Player();
 		two = new Player();
@@ -192,24 +260,9 @@ public:
 		std::cout << std::endl << std::endl;
 	}
 
-	void clearBoard()
-	{
-		values.clear();
-
-		for (int i = 0; i < TOTAL_CELLS; i++)
-		{
-			values.push_back(' ');
-		}
-
-		if (one->position == 1)
-			turn = false;
-		else
-			turn = true;
-	}
-
 	void introPrompt()
 	{
-		std::cout << "Select '1' to play against a buddy or type '2' to play against the computer!"<< std::endl;
+		std::cout << "Select '1' to play against a buddy or '2' to play against the computer!"<< std::endl;
 
 		std::cin >> mode;
 
@@ -227,51 +280,9 @@ public:
 	void setTokensPrompt()
 	{
 		std::cout << "Player 1 choose your symbol, type '" << X_SYM << "' or '" << O_SYM << "'" << std::endl;
-		std::cin >> playerOneSym;
-		
-	/*	if (mode == 1)
-		{
-			if (playerOneSym == X_SYM)
-			{
-				one->setProperties(1, X_SYM);
-				two->setProperties(2, O_SYM);
-			}
+		std::cin >> one->sym;
 
-			else if (playerOneSym == O_SYM)
-			{
-				one->setProperties(1, O_SYM);
-				two->setProperties(2, X_SYM);
-				turn = !turn;
-			}
-			else
-			{
-				std::cout << "That's not a valid response" << std::endl;
-				setTokensPrompt();
-			}
-		}
-
-		else if (mode == 2)
-		{
-			// Make a player a computer
-			if (playerOneSym == X_SYM)
-			{
-				one->setProperties(1, X_SYM);
-				computer->setProperties(2, O_SYM);
-			}
-			else if (playerOneSym == O_SYM)
-			{
-				one->setProperties(2, O_SYM);
-				computer->setProperties(1, X_SYM);
-				turn = !turn;
-			}
-			else
-			{
-				std::cout << "That's not a valid response" << std::endl;
-				setTokensPrompt();
-			}
-		}*/
-
-		if (playerOneSym == X_SYM)
+		if (one->sym == X_SYM)
 		{
 			if (mode == 1)
 			{
@@ -284,7 +295,7 @@ public:
 				computer->setProperties(2, O_SYM);
 			}
 		}
-		else if (playerOneSym == O_SYM)
+		else if (one->sym == O_SYM)
 		{
 			if (mode == 1)
 			{
@@ -315,69 +326,50 @@ public:
 		return (play == 1) ? true : false;
 	}
 
+	bool changeControls()
+	{
+		int change;
+		std::cout << "Would you like to change controls? (1 for yes, 2 for no) " << std::endl;
+		std::cin >> change;
+
+		if (change == 1)
+		{
+			introPrompt();
+			return true;
+		}			
+		else if (change == 2)
+			return false;
+		else
+			changeControls();
+	}
+
 	void turnPrompt()
 	{
 		if (mode == 1)
 		{
 			if (turn == false)
 				turnPrompt(one);			
-			else
-				turnPrompt(two);
+			else if(turn == true)
+				turnPrompt(two);				
 		}
 		else
 		{
 			if (turn == false)
 				turnPrompt(one);
 			else
-				turnPromptAI();
+				turnPromptAI(computer);
 		}		
 	}
 
-	void turnPrompt(Player* x)
+	void restartGame()
 	{
-		int cell;
-
-		std::cout << "Player " << x->position << " turn" << std::endl;
-		std::cout << "Which cell would you like to fill?" << std::endl;
-		std::cin >> cell;
-
-		if (values[cell] != BLANK)
-			turnPrompt(x);
-		else
-			values[cell] = x->sym;
+		clearBoard();
+		resetTurns();
 	}
 
-	void turnPromptAI()
+	bool gameOver()
 	{
-		std::cout << "Waiting for computer to make a move..." << std::endl;
-		int computerMove;
-
-		if(computer->position == 2)
-			computerMove = computer->makeAIMove(values, false);
-		else
-			computerMove = computer->makeAIMove(values, true);
-
-		values[computerMove] = computer->sym;
-		std::cout << "Computer chose cell " << computerMove << std::endl;
-	}
-
-	void nextPlayer()
-	{
-		//Switch to next player
-		turn = !turn;
-	}
-	
-	bool checkWin()
-	{
-		if (turn == false)
-			return checkWin(one->sym);
-		else
-			return checkWin(two->sym);
-	}
-
-	bool checkWinAI()
-	{
-		int score = checkWin(0);
+		int score = checkWin();
 		if (score != -1)
 		{
 			if (score == 10)
@@ -392,36 +384,6 @@ public:
 			
 		else
 			return false;
-	}
-
-	int checkWin(int depth)
-	{
-		for (int i = 0; i < 8; i++)
-		{
-			if (values[wins[i][0]] == values[wins[i][1]] && values[wins[i][1]] == values[wins[i][2]])
-			{
-				if (values[wins[i][0]] == X_SYM)
-					return 10 + depth;
-				if (values[wins[i][0]] == O_SYM)
-					return depth - 10;
-			}
-		}
-
-		if (isBoardFull())
-			return 0;
-		else
-			return -1;
-	}
-
-	bool isBoardFull()
-	{
-		for (int i = 0; i < 9; i++)
-		{
-			if (values[i] == BLANK)
-				return false;
-		}
-
-		return true;
 	}
 
 };
